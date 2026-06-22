@@ -27,9 +27,20 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onViewPitch, onStatusChange, 
     'New Lead', 'Contacted', 'Follow Up', 'Meeting Set', 'Proposal Sent', 'Closed Won', 'Closed Lost'
   ];
 
-  // Helper to determine if email is an actual email or a website form
-  const isEmail = lead.email.includes('@');
-  const cleanPhone = lead.phone.replace(/[^0-9+]/g, '');
+  // Validation helpers to prevent rendering fake/unavailable links
+  const isPhoneValid = lead.phone && 
+                       lead.phone.toLowerCase() !== 'not available' && 
+                       lead.phone.toLowerCase() !== 'n/a' && 
+                       !lead.phone.includes('555') && 
+                       lead.phone.replace(/[^0-9]/g, '').length >= 7;
+                       
+  const isEmailValid = lead.email && 
+                       lead.email.toLowerCase() !== 'not available' && 
+                       lead.email.toLowerCase() !== 'n/a' &&
+                       !lead.email.includes('example.com');
+  
+  const isEmailFormat = isEmailValid && lead.email.includes('@');
+  const cleanPhone = lead.phone ? lead.phone.replace(/[^0-9+]/g, '') : '';
 
   const getHostname = (urlStr: string) => {
     try {
@@ -71,13 +82,19 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onViewPitch, onStatusChange, 
         <div className="space-y-2 text-sm mb-5">
           <div className="flex items-center gap-3">
             <PhoneIcon className="w-4 h-4 text-slate-500 shrink-0" />
-            <a href={`tel:${cleanPhone}`} className="text-slate-300 hover:text-brand-400 transition-colors">
-              {lead.phone}
-            </a>
+            {isPhoneValid ? (
+              <a href={`tel:${cleanPhone}`} className="text-slate-300 hover:text-brand-400 transition-colors">
+                {lead.phone}
+              </a>
+            ) : (
+              <span className="text-slate-500 italic">{lead.phone || 'Not available'}</span>
+            )}
           </div>
           <div className="flex items-center gap-3">
-            {isEmail ? <MailIcon className="w-4 h-4 text-slate-500 shrink-0" /> : <GlobeIcon className="w-4 h-4 text-slate-500 shrink-0" />}
-            {isEmail ? (
+            {isEmailFormat ? <MailIcon className="w-4 h-4 text-slate-500 shrink-0" /> : <GlobeIcon className="w-4 h-4 text-slate-500 shrink-0" />}
+            {!isEmailValid ? (
+              <span className="text-slate-500 italic">{lead.email || 'Not available'}</span>
+            ) : isEmailFormat ? (
               <a href={`mailto:${lead.email}`} className="text-slate-300 hover:text-brand-400 transition-colors truncate">
                 {lead.email}
               </a>
@@ -94,14 +111,14 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onViewPitch, onStatusChange, 
           <div className="grid grid-cols-2 gap-2 text-xs mb-3">
             <div className="bg-slate-800/40 p-2.5 rounded border border-slate-700/50">
               <span className="block text-slate-500 mb-1 uppercase tracking-wider text-[9px] font-bold">Operational</span>
-              <span className="text-slate-300 font-medium">{lead.yearsOperational || 'N/A'}</span>
+              <span className="text-slate-300 font-medium">{lead.yearsOperational && lead.yearsOperational !== 'Not available' ? lead.yearsOperational : 'N/A'}</span>
             </div>
             <div className="bg-slate-800/40 p-2.5 rounded border border-slate-700/50">
               <span className="block text-slate-500 mb-1 uppercase tracking-wider text-[9px] font-bold">Standing</span>
-              <span className="text-slate-300 font-medium truncate block" title={lead.currentStandings}>{lead.currentStandings || 'N/A'}</span>
+              <span className="text-slate-300 font-medium truncate block" title={lead.currentStandings}>{lead.currentStandings && lead.currentStandings !== 'Not available' ? lead.currentStandings : 'N/A'}</span>
             </div>
           </div>
-          {lead.businessReview && (
+          {lead.businessReview && lead.businessReview !== 'Not available' && (
             <div className="border-l-2 border-brand-500/30 pl-3 py-1">
               <p className="text-xs text-slate-400 italic leading-relaxed">
                 "{lead.businessReview}"
